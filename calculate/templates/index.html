@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>钙钛矿带隙预测器</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+        h1 {
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .input-groups {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .input-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .group-title {
+            font-size: 1.2em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e1e4e8;
+        }
+        .input-field {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        .sum-display {
+            font-size: 0.9em;
+            color: #718096;
+            margin-top: 5px;
+        }
+        .error {
+            color: #e53e3e;
+            border-color: #e53e3e;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3182ce;
+        }
+        button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 1.2em;
+            padding: 15px;
+            border-radius: 8px;
+            background: #ebf8ff;
+            color: #2b6cb0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>钙钛矿带隙预测器</h1>
+        <div class="input-groups">
+            <div class="input-group">
+                <div class="group-title">A位阳离子组分</div>
+                <div class="input-field">
+                    <label for="MA">MA比例:</label>
+                    <input type="number" id="MA" step="0.01" min="0" max="1" required>
+                </div>
+                <div class="input-field">
+                    <label for="FA">FA比例:</label>
+                    <input type="number" id="FA" step="0.01" min="0" max="1" required>
+                </div>
+                <div class="input-field">
+                    <label for="CS">Cs比例:</label>
+                    <input type="number" id="CS" step="0.01" min="0" max="1" required>
+                </div>
+                <div class="sum-display" id="sum-a">A位总和: 0</div>
+            </div>
+            
+            <div class="input-group">
+                <div class="group-title">X位卤素组分</div>
+                <div class="input-field">
+                    <label for="Br">Br比例:</label>
+                    <input type="number" id="Br" step="0.01" min="0" max="1" required>
+                </div>
+                <div class="input-field">
+                    <label for="Cl">Cl比例:</label>
+                    <input type="number" id="Cl" step="0.01" min="0" max="1" required>
+                </div>
+                <div class="input-field">
+                    <label for="I">I比例:</label>
+                    <input type="number" id="I" step="0.01" min="0" max="1" required>
+                </div>
+                <div class="sum-display" id="sum-x">X位总和: 0</div>
+            </div>
+        </div>
+        
+        <button onclick="predict()" id="predict-btn">预测带隙值</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        // 监听输入变化，实时计算总和
+        const aInputs = ['MA', 'FA', 'CS'];
+        const xInputs = ['Br', 'Cl', 'I'];
+        
+        function updateSums() {
+            const sumA = aInputs.reduce((sum, id) => {
+                return sum + (parseFloat(document.getElementById(id).value) || 0);
+            }, 0);
+            
+            const sumX = xInputs.reduce((sum, id) => {
+                return sum + (parseFloat(document.getElementById(id).value) || 0);
+            }, 0);
+            
+            document.getElementById('sum-a').textContent = `A位总和: ${sumA.toFixed(2)}`;
+            document.getElementById('sum-x').textContent = `X位总和: ${sumX.toFixed(2)}`;
+            
+            const isValid = Math.abs(sumA - 1) < 0.01 && Math.abs(sumX - 1) < 0.01;
+            document.getElementById('predict-btn').disabled = !isValid;
+            
+            // 更新输入框样式
+            if (Math.abs(sumA - 1) >= 0.01) {
+                aInputs.forEach(id => document.getElementById(id).classList.add('error'));
+            } else {
+                aInputs.forEach(id => document.getElementById(id).classList.remove('error'));
+            }
+            
+            if (Math.abs(sumX - 1) >= 0.01) {
+                xInputs.forEach(id => document.getElementById(id).classList.add('error'));
+            } else {
+                xInputs.forEach(id => document.getElementById(id).classList.remove('error'));
+            }
+        }
+        
+        // 为所有输入框添加事件监听
+        [...aInputs, ...xInputs].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateSums);
+        });
+        
+        function predict() {
+            const data = {
+                MA: parseFloat(document.getElementById('MA').value) || 0,
+                FA: parseFloat(document.getElementById('FA').value) || 0,
+                CS: parseFloat(document.getElementById('CS').value) || 0,
+                Br: parseFloat(document.getElementById('Br').value) || 0,
+                Cl: parseFloat(document.getElementById('Cl').value) || 0,
+                I: parseFloat(document.getElementById('I').value) || 0
+            };
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `预测错误: ${data.error}`;
+                    document.getElementById('result').style.backgroundColor = '#fff5f5';
+                    document.getElementById('result').style.color = '#c53030';
+                } else {
+                    document.getElementById('result').innerHTML = `预测的带隙值: ${data.bandgap.toFixed(3)} eV`;
+                    document.getElementById('result').style.backgroundColor = '#ebf8ff';
+                    document.getElementById('result').style.color = '#2b6cb0';
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `错误: ${error}`;
+                document.getElementById('result').style.backgroundColor = '#fff5f5';
+                document.getElementById('result').style.color = '#c53030';
+            });
+        }
+    </script>
+</body>
+</html>
